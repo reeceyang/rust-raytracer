@@ -43,7 +43,7 @@ fn main() -> Result<(), Error> {
         ],
         bg_color: Color::WHITE,
         canvas: Surface::new(WIDTH as f64, HEIGHT as f64),
-        viewport: Surface::new(1.0, 1.0),
+        viewport: Surface::new(1.0, HEIGHT as f64 / WIDTH as f64),
         camera_dist: 1.0,
     };
 
