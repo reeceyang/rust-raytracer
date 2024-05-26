@@ -85,6 +85,14 @@ impl Vec3 {
     pub fn dot(self, rhs: Vec3) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
+
+    pub fn length(self) -> f64 {
+        f64::sqrt(self.dot(self))
+    }
+
+    pub fn normalize(self) -> Vec3 {
+        self / self.length()
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -95,9 +103,33 @@ pub struct Color {
     pub a: u8,
 }
 
-impl From<Color> for [u8; 4] {
-    fn from(color: Color) -> Self {
-        [color.r, color.b, color.g, color.a]
+/// multiplies u by f and clamps the product to the valid range of u8 values
+fn clamped_mul(u: u8, f: f64) -> u8 {
+    let product = ((u as f64) * f).clamp(u8::MIN as f64, u8::MAX as f64);
+    return product as u8;
+}
+
+impl Mul<f64> for Color {
+    type Output = Color;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Color {
+            r: clamped_mul(self.r, rhs),
+            g: clamped_mul(self.g, rhs),
+            b: clamped_mul(self.b, rhs),
+            a: clamped_mul(self.a, rhs),
+        }
+    }
+}
+
+impl Mul<Color> for f64 {
+    type Output = Color;
+    fn mul(self, rhs: Color) -> Self::Output {
+        Color {
+            r: clamped_mul(rhs.r, self),
+            g: clamped_mul(rhs.g, self),
+            b: clamped_mul(rhs.b, self),
+            a: clamped_mul(rhs.a, self),
+        }
     }
 }
 
@@ -132,6 +164,9 @@ impl Color {
         b: 0,
         a: 0,
     };
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Color { r, g, b, a }
+    }
     pub fn as_u8_slice(self) -> [u8; 4] {
         [self.r, self.g, self.b, self.a]
     }
@@ -164,10 +199,52 @@ impl Surface {
     }
 }
 
+pub struct AmbientLight {
+    pub intensity: f64,
+}
+
+impl AmbientLight {
+    pub fn new(intensity: f64) -> Self {
+        AmbientLight { intensity }
+    }
+}
+
+pub struct PointLight {
+    pub intensity: f64,
+    pub position: Vec3,
+}
+
+impl PointLight {
+    pub fn new(intensity: f64, position: Vec3) -> Self {
+        PointLight {
+            intensity,
+            position,
+        }
+    }
+}
+
+pub struct DirectionalLight {
+    pub intensity: f64,
+    pub dir: Vec3,
+}
+
+impl DirectionalLight {
+    pub fn new(intensity: f64, dir: Vec3) -> Self {
+        DirectionalLight { intensity, dir }
+    }
+}
+
+pub enum Light {
+    Ambient(AmbientLight),
+    Point(PointLight),
+    Directional(DirectionalLight),
+}
+
 pub struct Scene {
     pub spheres: Vec<Sphere>,
     pub bg_color: Color,
     pub canvas: Surface,
     pub viewport: Surface,
     pub camera_dist: f64,
+    pub lights: Vec<Light>,
 }

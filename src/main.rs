@@ -37,14 +37,36 @@ fn main() -> Result<(), Error> {
     };
     let scene = Scene {
         spheres: vec![
-            Sphere::new(1.0, Vec3::new(0.0, -1.0, 3.0), Color::RED),
-            Sphere::new(1.0, Vec3::new(2.0, 0.0, 4.0), Color::BLUE),
-            Sphere::new(1.0, Vec3::new(-2.0, 0.0, 4.0), Color::GREEN),
+            Sphere::new(
+                1.0,
+                Vec3::new(0.0, -1.0, 3.0),
+                Color::new(0xb2, 0x0d, 0x30, 0xff),
+            ),
+            Sphere::new(
+                1.0,
+                Vec3::new(2.0, 0.0, 4.0),
+                Color::new(0x3f, 0x84, 0xe5, 0xff),
+            ),
+            Sphere::new(
+                1.0,
+                Vec3::new(-2.0, 0.0, 4.0),
+                Color::new(0x3f, 0x78, 0x4c, 0xff),
+            ),
+            Sphere::new(
+                5000.0,
+                Vec3::new(0.0, -5001.0, 0.0),
+                Color::new(0xc1, 0x78, 0x17, 0xff),
+            ),
         ],
         bg_color: Color::WHITE,
         canvas: Surface::new(WIDTH as f64, HEIGHT as f64),
         viewport: Surface::new(1.0, HEIGHT as f64 / WIDTH as f64),
         camera_dist: 1.0,
+        lights: vec![
+            Light::Ambient(AmbientLight::new(0.2)),
+            Light::Point(PointLight::new(0.6, Vec3::new(2.0, 1.0, 0.0))),
+            Light::Directional(DirectionalLight::new(0.2, Vec3::new(1.0, 4.0, 4.0))),
+        ],
     };
 
     scene.draw(pixels.frame_mut());
