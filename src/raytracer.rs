@@ -10,10 +10,16 @@ pub fn canvas_to_viewport(scene: &Scene, x: f64, y: f64) -> Vec3 {
     Vec3::new(x * vw / cw, y * vh / ch, scene.camera_dist)
 }
 
-/// finds the color of the sphere at the nearest intersection of the ray
-/// origin + dir * t within the given range of t
-pub fn trace_ray(scene: &Scene, origin: Vec3, dir: Vec3, t_min: f64, t_max: f64) -> Color {
-    let closest_sphere = scene
+/// finds the sphere at the nearest intersection of the ray origin + dir * t
+/// within the given range of t
+fn closest_intersection(
+    scene: &Scene,
+    origin: Vec3,
+    dir: Vec3,
+    t_min: f64,
+    t_max: f64,
+) -> Option<(f64, &Sphere)> {
+    scene
         .spheres
         .iter()
         // get the values of t at which the ray intersects the sphere
@@ -25,8 +31,13 @@ pub fn trace_ray(scene: &Scene, origin: Vec3, dir: Vec3, t_min: f64, t_max: f64)
         // filter out t values at infinity
         .filter(|(t, _)| *t < f64::INFINITY)
         // find the sphere with the least t value
-        .min_by(|(t, _), (u, _)| t.total_cmp(u));
-    if let Some((t, sphere)) = closest_sphere {
+        .min_by(|(t, _), (u, _)| t.total_cmp(u))
+}
+
+/// finds the color of the sphere at the nearest intersection of the ray
+/// origin + dir * t within the given range of t
+pub fn trace_ray(scene: &Scene, origin: Vec3, dir: Vec3, t_min: f64, t_max: f64) -> Color {
+    if let Some((t, sphere)) = closest_intersection(scene, origin, dir, t_min, t_max) {
         let point = origin + t * dir;
         let normal = (point - sphere.center).normalize();
         return sphere.color * compute_lighting(scene, point, normal, -dir, sphere.material);
@@ -67,7 +78,12 @@ fn compute_lighting(
         .lights
         .iter()
         .map(|light| {
-            let calculate_intensity = |intensity: f64, light_dir: Vec3| {
+            let calculate_intensity = |intensity: f64, light_dir: Vec3, t_max: f64| {
+                // check for a shadow
+                if closest_intersection(scene, point, light_dir, 0.001, t_max).is_some() {
+                    return 0.0;
+                }
+
                 let n_dot_l = normal.dot(light_dir);
                 let diffuse = if n_dot_l > 0.0 {
                     n_dot_l / (normal.length() * light_dir.length())
@@ -95,8 +111,12 @@ fn compute_lighting(
 
             match light {
                 Light::Ambient(light) => light.intensity,
-                Light::Point(light) => calculate_intensity(light.intensity, light.position - point),
-                Light::Directional(light) => calculate_intensity(light.intensity, light.dir),
+                Light::Point(light) => {
+                    calculate_intensity(light.intensity, light.position - point, 1.0)
+                }
+                Light::Directional(light) => {
+                    calculate_intensity(light.intensity, light.dir, f64::INFINITY)
+                }
             }
         })
         .fold(0.0, Add::add)
