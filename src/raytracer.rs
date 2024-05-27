@@ -29,7 +29,7 @@ pub fn trace_ray(scene: &Scene, origin: Vec3, dir: Vec3, t_min: f64, t_max: f64)
     if let Some((t, sphere)) = closest_sphere {
         let point = origin + t * dir;
         let normal = (point - sphere.center).normalize();
-        return sphere.color * compute_lighting(scene, point, normal);
+        return sphere.color * compute_lighting(scene, point, normal, -dir, sphere.material);
     }
     scene.bg_color
 }
@@ -56,23 +56,47 @@ fn intersect_ray_sphere(origin: Vec3, dir: Vec3, sphere: &Sphere) -> (f64, f64) 
 }
 
 /// compute the lighting at the point with the given normal vector
-fn compute_lighting(scene: &Scene, point: Vec3, normal: Vec3) -> f64 {
+fn compute_lighting(
+    scene: &Scene,
+    point: Vec3,
+    normal: Vec3,
+    point_to_camera: Vec3,
+    material: Material,
+) -> f64 {
     scene
         .lights
         .iter()
         .map(|light| {
-            let calculate_intensity = |light_dir: Vec3| {
+            let calculate_intensity = |intensity: f64, light_dir: Vec3| {
                 let n_dot_l = normal.dot(light_dir);
-                if n_dot_l > 0.0 {
-                    return n_dot_l / (normal.length() * light_dir.length());
-                }
-                0.0
+                let diffuse = if n_dot_l > 0.0 {
+                    n_dot_l / (normal.length() * light_dir.length())
+                } else {
+                    0.0
+                };
+                let specular = match material {
+                    Material::Specular(s) => {
+                        let reflect_dir = 2.0 * normal * normal.dot(light_dir) - light_dir;
+                        let r_dot_v = reflect_dir.dot(point_to_camera);
+                        if r_dot_v > 0.0 {
+                            intensity
+                                * f64::powf(
+                                    r_dot_v / (reflect_dir.length() * point_to_camera.length()),
+                                    s,
+                                )
+                        } else {
+                            0.0
+                        }
+                    }
+                    Material::Matte => 0.0,
+                };
+                diffuse + specular
             };
 
             match light {
                 Light::Ambient(light) => light.intensity,
-                Light::Point(light) => calculate_intensity(light.position - point),
-                Light::Directional(light) => calculate_intensity(light.dir),
+                Light::Point(light) => calculate_intensity(light.intensity, light.position - point),
+                Light::Directional(light) => calculate_intensity(light.intensity, light.dir),
             }
         })
         .fold(0.0, Add::add)

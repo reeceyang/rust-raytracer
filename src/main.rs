@@ -12,8 +12,8 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
-const WIDTH: u32 = 320;
-const HEIGHT: u32 = 240;
+const WIDTH: u32 = 640;
+const HEIGHT: u32 = 480;
 const ORIGIN: Vec3 = Vec3::ZERO;
 
 fn main() -> Result<(), Error> {
@@ -41,21 +41,25 @@ fn main() -> Result<(), Error> {
                 1.0,
                 Vec3::new(0.0, -1.0, 3.0),
                 Color::new(0xb2, 0x0d, 0x30, 0xff),
+                Material::Specular(500.0),
             ),
             Sphere::new(
                 1.0,
                 Vec3::new(2.0, 0.0, 4.0),
                 Color::new(0x3f, 0x84, 0xe5, 0xff),
+                Material::Specular(500.0),
             ),
             Sphere::new(
                 1.0,
                 Vec3::new(-2.0, 0.0, 4.0),
                 Color::new(0x3f, 0x78, 0x4c, 0xff),
+                Material::Specular(10.0),
             ),
             Sphere::new(
                 5000.0,
                 Vec3::new(0.0, -5001.0, 0.0),
                 Color::new(0xc1, 0x78, 0x17, 0xff),
+                Material::Specular(1000.0),
             ),
         ],
         bg_color: Color::WHITE,

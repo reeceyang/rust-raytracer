@@ -176,14 +176,22 @@ pub struct Sphere {
     pub radius: f64,
     pub center: Vec3,
     pub color: Color,
+    pub material: Material,
+}
+
+#[derive(Clone, Copy)]
+pub enum Material {
+    Specular(f64),
+    Matte,
 }
 
 impl Sphere {
-    pub fn new(radius: f64, center: Vec3, color: Color) -> Self {
+    pub fn new(radius: f64, center: Vec3, color: Color, material: Material) -> Self {
         Sphere {
             radius,
             center,
             color,
+            material,
         }
     }
 }
