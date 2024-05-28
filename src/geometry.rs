@@ -163,7 +163,7 @@ impl Mat3x3 {
         Mat3x3 {
             col1: Vec3 {
                 x: x_axis.x,
-                y: y_axis.y,
+                y: y_axis.x,
                 z: dir.x,
             },
             col2: Vec3 {
@@ -371,5 +371,6 @@ pub struct Scene {
 
 pub struct Camera {
     pub position: Vec3,
-    pub rotation: Vec3,
+    pub y_rot: f64,
+    pub x_rot: f64,
 }
