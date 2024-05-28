@@ -14,8 +14,8 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
-const WIDTH: u32 = 320;
-const HEIGHT: u32 = 240;
+const WIDTH: u32 = 640;
+const HEIGHT: u32 = 480;
 const CAMERA_MOV_STEP: f64 = 0.5;
 const CAMERA_ROT_STEP: f64 = 0.1;
 
@@ -164,17 +164,22 @@ async fn run() {
 
         // Handle input events
         if input.update(&event) {
+            // TODO: this should probably be refactored and cleaned up
             if input.key_held(VirtualKeyCode::W) {
-                camera.position.z = camera.position.z + CAMERA_MOV_STEP;
+                camera.position =
+                    camera.position + Mat3x3::y_rot_mat(camera.y_rot) * Vec3::K * CAMERA_MOV_STEP;
             }
             if input.key_held(VirtualKeyCode::S) {
-                camera.position.z = camera.position.z - CAMERA_MOV_STEP;
+                camera.position =
+                    camera.position - Mat3x3::y_rot_mat(camera.y_rot) * Vec3::K * CAMERA_MOV_STEP;
             }
             if input.key_held(VirtualKeyCode::D) {
-                camera.position.x = camera.position.x + CAMERA_MOV_STEP;
+                camera.position =
+                    camera.position + Mat3x3::y_rot_mat(camera.y_rot) * Vec3::I * CAMERA_MOV_STEP;
             }
             if input.key_held(VirtualKeyCode::A) {
-                camera.position.x = camera.position.x - CAMERA_MOV_STEP;
+                camera.position =
+                    camera.position - Mat3x3::y_rot_mat(camera.y_rot) * Vec3::I * CAMERA_MOV_STEP;
             }
             if input.key_held(VirtualKeyCode::Space) {
                 camera.position.y = camera.position.y + CAMERA_MOV_STEP;

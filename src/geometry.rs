@@ -77,6 +77,21 @@ impl Vec3 {
         y: 0.0,
         z: 0.0,
     };
+    pub const I: Vec3 = Vec3 {
+        x: 1.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    pub const J: Vec3 = Vec3 {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+    };
+    pub const K: Vec3 = Vec3 {
+        x: 0.0,
+        y: 0.0,
+        z: 1.0,
+    };
 
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
@@ -129,21 +144,9 @@ impl Mul<Vec3> for Mat3x3 {
 
 impl Mat3x3 {
     pub const IDENTITY: Mat3x3 = Mat3x3 {
-        col1: Vec3 {
-            x: 1.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        col2: Vec3 {
-            x: 0.0,
-            y: 1.0,
-            z: 0.0,
-        },
-        col3: Vec3 {
-            x: 0.0,
-            y: 0.0,
-            z: 1.0,
-        },
+        col1: Vec3::I,
+        col2: Vec3::J,
+        col3: Vec3::K,
     };
 
     pub fn new(col1: Vec3, col2: Vec3, col3: Vec3) -> Self {
@@ -153,11 +156,7 @@ impl Mat3x3 {
     /// constructs the rotation matrix about the x axis by theta (in radians)
     pub fn x_rot_mat(theta: f64) -> Self {
         Mat3x3 {
-            col1: Vec3 {
-                x: 1.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            col1: Vec3::I,
             col2: Vec3 {
                 x: 0.0,
                 y: f64::cos(theta),
@@ -179,11 +178,7 @@ impl Mat3x3 {
                 y: 0.0,
                 z: -f64::sin(theta),
             },
-            col2: Vec3 {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            col2: Vec3::J,
             col3: Vec3 {
                 x: f64::sin(theta),
                 y: 0.0,
