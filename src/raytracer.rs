@@ -36,11 +36,34 @@ fn closest_intersection(
 
 /// finds the color of the sphere at the nearest intersection of the ray
 /// origin + dir * t within the given range of t
-pub fn trace_ray(scene: &Scene, origin: Vec3, dir: Vec3, t_min: f64, t_max: f64) -> Color {
+pub fn trace_ray(
+    scene: &Scene,
+    origin: Vec3,
+    dir: Vec3,
+    t_min: f64,
+    t_max: f64,
+    depth: u8,
+) -> Color {
     if let Some((t, sphere)) = closest_intersection(scene, origin, dir, t_min, t_max) {
         let point = origin + t * dir;
         let normal = (point - sphere.center).normalize();
-        return sphere.color * compute_lighting(scene, point, normal, -dir, sphere.material);
+        let local_color =
+            sphere.color * compute_lighting(scene, point, normal, -dir, sphere.specularity);
+        if depth <= 0 || sphere.reflectiveness <= 0.0 {
+            return local_color;
+        }
+
+        let reflected_color = trace_ray(
+            &scene,
+            point,
+            reflect_ray(-dir, normal),
+            0.001,
+            f64::INFINITY,
+            depth - 1,
+        );
+
+        return local_color * (1.0 - sphere.reflectiveness)
+            + reflected_color * sphere.reflectiveness;
     }
     scene.bg_color
 }
@@ -66,13 +89,18 @@ fn intersect_ray_sphere(origin: Vec3, dir: Vec3, sphere: &Sphere) -> (f64, f64) 
     (t1, t2)
 }
 
+/// reflect ray with respect to normal
+fn reflect_ray(ray: Vec3, normal: Vec3) -> Vec3 {
+    2.0 * normal * normal.dot(ray) - ray
+}
+
 /// compute the lighting at the point with the given normal vector
 fn compute_lighting(
     scene: &Scene,
     point: Vec3,
     normal: Vec3,
     point_to_camera: Vec3,
-    material: Material,
+    specularity: Specularity,
 ) -> f64 {
     scene
         .lights
@@ -90,9 +118,9 @@ fn compute_lighting(
                 } else {
                     0.0
                 };
-                let specular = match material {
-                    Material::Specular(s) => {
-                        let reflect_dir = 2.0 * normal * normal.dot(light_dir) - light_dir;
+                let specular = match specularity {
+                    Specularity::Specular(s) => {
+                        let reflect_dir = reflect_ray(light_dir, normal);
                         let r_dot_v = reflect_dir.dot(point_to_camera);
                         if r_dot_v > 0.0 {
                             intensity
@@ -104,7 +132,7 @@ fn compute_lighting(
                             0.0
                         }
                     }
-                    Material::Matte => 0.0,
+                    Specularity::Matte => 0.0,
                 };
                 diffuse + specular
             };

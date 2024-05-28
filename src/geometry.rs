@@ -106,7 +106,25 @@ pub struct Color {
 /// multiplies u by f and clamps the product to the valid range of u8 values
 fn clamped_mul(u: u8, f: f64) -> u8 {
     let product = ((u as f64) * f).clamp(u8::MIN as f64, u8::MAX as f64);
-    return product as u8;
+    product as u8
+}
+
+fn clamped_add(u: u8, v: u8) -> u8 {
+    let sum = (u as u16 + v as u16).clamp(u8::MIN as u16, u8::MAX as u16);
+    sum as u8
+}
+
+impl Add for Color {
+    type Output = Color;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Color {
+            r: clamped_add(self.r, rhs.r),
+            g: clamped_add(self.g, rhs.g),
+            b: clamped_add(self.b, rhs.b),
+            a: clamped_add(self.a, rhs.a),
+        }
+    }
 }
 
 impl Mul<f64> for Color {
@@ -176,22 +194,31 @@ pub struct Sphere {
     pub radius: f64,
     pub center: Vec3,
     pub color: Color,
-    pub material: Material,
+    pub specularity: Specularity,
+    /// 0.0 (not reflective at all) to 1.0 (a perfect mirror)
+    pub reflectiveness: f64,
 }
 
 #[derive(Clone, Copy)]
-pub enum Material {
+pub enum Specularity {
     Specular(f64),
     Matte,
 }
 
 impl Sphere {
-    pub fn new(radius: f64, center: Vec3, color: Color, material: Material) -> Self {
+    pub fn new(
+        radius: f64,
+        center: Vec3,
+        color: Color,
+        specularity: Specularity,
+        reflectiveness: f64,
+    ) -> Self {
         Sphere {
             radius,
             center,
             color,
-            material,
+            specularity,
+            reflectiveness,
         }
     }
 }
