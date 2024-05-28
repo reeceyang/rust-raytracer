@@ -196,7 +196,7 @@ async fn run() {
             // }
 
             // Close events
-            if input.key_pressed(VirtualKeyCode::Escape) || input.close_requested() {
+            if input.close_requested() {
                 *control_flow = ControlFlow::Exit;
                 return;
             }
