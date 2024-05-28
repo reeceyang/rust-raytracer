@@ -150,34 +150,77 @@ impl Mat3x3 {
         Mat3x3 { col1, col2, col3 }
     }
 
-    // adapted from https://stackoverflow.com/a/18574797
-    /// get the rotation matrix of rotating to dir from up
-    /// up must be nonzero
-    pub fn rotation_mat(dir: Vec3, up: Vec3) -> Self {
-        let x_axis = up.cross(dir).normalize();
-        if x_axis.x.is_nan() {
-            return Mat3x3::IDENTITY;
-        }
-        let y_axis = dir.cross(x_axis).normalize();
-
+    /// constructs the rotation matrix about the x axis by theta (in radians)
+    pub fn x_rot_mat(theta: f64) -> Self {
         Mat3x3 {
             col1: Vec3 {
-                x: x_axis.x,
-                y: y_axis.x,
-                z: dir.x,
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
             },
             col2: Vec3 {
-                x: x_axis.y,
-                y: y_axis.y,
-                z: dir.y,
+                x: 0.0,
+                y: f64::cos(theta),
+                z: f64::sin(theta),
             },
             col3: Vec3 {
-                x: x_axis.z,
-                y: y_axis.z,
-                z: dir.z,
+                x: 0.0,
+                y: -f64::sin(theta),
+                z: f64::cos(theta),
             },
         }
     }
+
+    /// constructs the rotation matrix about the y axis by theta (in radians)
+    pub fn y_rot_mat(theta: f64) -> Self {
+        Mat3x3 {
+            col1: Vec3 {
+                x: f64::cos(theta),
+                y: 0.0,
+                z: -f64::sin(theta),
+            },
+            col2: Vec3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
+            col3: Vec3 {
+                x: f64::sin(theta),
+                y: 0.0,
+                z: f64::cos(theta),
+            },
+        }
+    }
+
+    // adapted from https://stackoverflow.com/a/18574797
+    // get the rotation matrix of rotating to dir from up
+    // up must be nonzero
+    // this is broken :()
+    // pub fn rotation_mat(dir: Vec3, up: Vec3) -> Self {
+    //     let x_axis = up.cross(dir).normalize();
+    //     if x_axis.x.is_nan() {
+    //         return Mat3x3::IDENTITY;
+    //     }
+    //     let y_axis = dir.cross(x_axis).normalize();
+
+    //     Mat3x3 {
+    //         col1: Vec3 {
+    //             x: x_axis.x,
+    //             y: y_axis.x,
+    //             z: dir.x,
+    //         },
+    //         col2: Vec3 {
+    //             x: x_axis.y,
+    //             y: y_axis.y,
+    //             z: dir.y,
+    //         },
+    //         col3: Vec3 {
+    //             x: x_axis.z,
+    //             y: y_axis.z,
+    //             z: dir.z,
+    //         },
+    //     }
+    // }
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -182,18 +182,18 @@ async fn run() {
             if input.key_held(VirtualKeyCode::LShift) {
                 camera.position.y = camera.position.y - CAMERA_MOV_STEP;
             }
-            // if input.key_held(VirtualKeyCode::Up) {
-            //     camera.rotation.y = camera.rotation.y - CAMERA_ROT_STEP;
-            // }
-            // if input.key_held(VirtualKeyCode::Down) {
-            //     camera.rotation.y = camera.rotation.y + CAMERA_ROT_STEP;
-            // }
-            // if input.key_held(VirtualKeyCode::Left) {
-            //     camera.rotation.z = camera.rotation.z - CAMERA_ROT_STEP;
-            // }
-            // if input.key_held(VirtualKeyCode::Right) {
-            //     camera.rotation.z = camera.rotation.z + CAMERA_ROT_STEP;
-            // }
+            if input.key_held(VirtualKeyCode::Up) {
+                camera.x_rot = camera.x_rot - CAMERA_ROT_STEP;
+            }
+            if input.key_held(VirtualKeyCode::Down) {
+                camera.x_rot = camera.x_rot + CAMERA_ROT_STEP;
+            }
+            if input.key_held(VirtualKeyCode::Left) {
+                camera.y_rot = camera.y_rot - CAMERA_ROT_STEP;
+            }
+            if input.key_held(VirtualKeyCode::Right) {
+                camera.y_rot = camera.y_rot + CAMERA_ROT_STEP;
+            }
 
             // Close events
             if input.close_requested() {
@@ -227,12 +227,6 @@ trait Drawable {
     fn draw(&self, frame: &mut [u8], camera: &Camera);
 }
 
-const UP: Vec3 = Vec3 {
-    x: 0.0,
-    y: 0.0,
-    z: 1.0,
-};
-
 impl Drawable for Scene {
     fn draw(&self, frame: &mut [u8], camera: &Camera) {
         for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
@@ -241,9 +235,8 @@ impl Drawable for Scene {
             let cx = x - (WIDTH / 2) as f64;
             let cy = (HEIGHT / 2) as f64 - y;
 
-            // let dir = Mat3x3::rotation_mat(camera.rotation, UP) * canvas_to_viewport(self, cx, cy);
-            // println!("{:#?}", Mat3x3::rotation_mat(camera.rotation, UP, X, Y));
-            let dir = canvas_to_viewport(self, cx, cy);
+            let dir = Mat3x3::y_rot_mat(camera.y_rot)
+                * (Mat3x3::x_rot_mat(camera.x_rot) * canvas_to_viewport(self, cx, cy));
             let color = trace_ray(self, camera.position, dir, 1.0, f64::INFINITY, 3);
 
             pixel.copy_from_slice(&color.as_u8_slice());
