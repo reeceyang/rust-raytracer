@@ -93,6 +93,91 @@ impl Vec3 {
     pub fn normalize(self) -> Vec3 {
         self / self.length()
     }
+
+    /// angle between self and rhs in radians
+    pub fn angle_between(self, rhs: Vec3) -> f64 {
+        f64::acos(self.dot(rhs) / (self.length() * rhs.length()))
+    }
+
+    pub fn cross(self, rhs: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.y * rhs.z - self.z * rhs.y,
+            y: -(self.x * rhs.z - self.z * rhs.x),
+            z: self.x * rhs.y - self.y * rhs.z,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Mat3x3 {
+    pub col1: Vec3,
+    pub col2: Vec3,
+    pub col3: Vec3,
+}
+
+impl Mul<Vec3> for Mat3x3 {
+    type Output = Vec3;
+
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.col1.x * rhs.x + self.col2.x * rhs.y + self.col3.x * rhs.z,
+            y: self.col1.y * rhs.x + self.col2.y * rhs.y + self.col3.y * rhs.z,
+            z: self.col1.z * rhs.x + self.col2.z * rhs.y + self.col3.z * rhs.z,
+        }
+    }
+}
+
+impl Mat3x3 {
+    pub const IDENTITY: Mat3x3 = Mat3x3 {
+        col1: Vec3 {
+            x: 1.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        col2: Vec3 {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        col3: Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        },
+    };
+
+    pub fn new(col1: Vec3, col2: Vec3, col3: Vec3) -> Self {
+        Mat3x3 { col1, col2, col3 }
+    }
+
+    // adapted from https://stackoverflow.com/a/18574797
+    /// get the rotation matrix of rotating to dir from up
+    /// up must be nonzero
+    pub fn rotation_mat(dir: Vec3, up: Vec3) -> Self {
+        let x_axis = up.cross(dir).normalize();
+        if x_axis.x.is_nan() {
+            return Mat3x3::IDENTITY;
+        }
+        let y_axis = dir.cross(x_axis).normalize();
+
+        Mat3x3 {
+            col1: Vec3 {
+                x: x_axis.x,
+                y: y_axis.y,
+                z: dir.x,
+            },
+            col2: Vec3 {
+                x: x_axis.y,
+                y: y_axis.y,
+                z: dir.y,
+            },
+            col3: Vec3 {
+                x: x_axis.z,
+                y: y_axis.z,
+                z: dir.z,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -282,4 +367,9 @@ pub struct Scene {
     pub viewport: Surface,
     pub camera_dist: f64,
     pub lights: Vec<Light>,
+}
+
+pub struct Camera {
+    pub position: Vec3,
+    pub rotation: Vec3,
 }

@@ -12,9 +12,9 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
-const WIDTH: u32 = 1280;
-const HEIGHT: u32 = 960;
-const ORIGIN: Vec3 = Vec3::ZERO;
+const WIDTH: u32 = 320;
+const HEIGHT: u32 = 240;
+const CAMERA_STEP: f64 = 0.5;
 
 fn main() -> Result<(), Error> {
     env_logger::init();
@@ -76,13 +76,17 @@ fn main() -> Result<(), Error> {
             Light::Directional(DirectionalLight::new(0.2, Vec3::new(1.0, 4.0, 4.0))),
         ],
     };
+    let mut camera = Camera {
+        position: Vec3::ZERO,
+        rotation: Vec3::new(0.0, 0.0, 1.0),
+    };
 
-    scene.draw(pixels.frame_mut());
+    scene.draw(pixels.frame_mut(), &camera);
 
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
-            // scene.draw(pixels.frame_mut());
+            scene.draw(pixels.frame_mut(), &camera);
             if let Err(err) = pixels.render() {
                 log_error("pixels.render", err);
                 *control_flow = ControlFlow::Exit;
@@ -92,6 +96,31 @@ fn main() -> Result<(), Error> {
 
         // Handle input events
         if input.update(&event) {
+            if input.key_held(VirtualKeyCode::W) {
+                camera.position.z = camera.position.z + CAMERA_STEP;
+            }
+            if input.key_held(VirtualKeyCode::S) {
+                camera.position.z = camera.position.z - CAMERA_STEP;
+            }
+            if input.key_held(VirtualKeyCode::D) {
+                camera.position.x = camera.position.x + CAMERA_STEP;
+            }
+            if input.key_held(VirtualKeyCode::A) {
+                camera.position.x = camera.position.x - CAMERA_STEP;
+            }
+            if input.key_held(VirtualKeyCode::Space) {
+                camera.position.y = camera.position.y + CAMERA_STEP;
+            }
+            if input.key_held(VirtualKeyCode::LShift) {
+                camera.position.y = camera.position.y - CAMERA_STEP;
+            }
+            if input.key_held(VirtualKeyCode::Up) {
+                camera.rotation.y = camera.rotation.y + CAMERA_STEP;
+            }
+            if input.key_held(VirtualKeyCode::Down) {
+                camera.rotation.y = camera.rotation.y - CAMERA_STEP;
+            }
+
             // Close events
             if input.key_pressed(VirtualKeyCode::Escape) || input.close_requested() {
                 *control_flow = ControlFlow::Exit;
@@ -121,19 +150,27 @@ fn log_error<E: std::error::Error + 'static>(method_name: &str, err: E) {
 }
 
 trait Drawable {
-    fn draw(&self, frame: &mut [u8]);
+    fn draw(&self, frame: &mut [u8], camera: &Camera);
 }
 
+const UP: Vec3 = Vec3 {
+    x: 0.0,
+    y: 0.0,
+    z: 1.0,
+};
+
 impl Drawable for Scene {
-    fn draw(&self, frame: &mut [u8]) {
+    fn draw(&self, frame: &mut [u8], camera: &Camera) {
         for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
             let x = (i % WIDTH as usize) as f64;
             let y = (i / WIDTH as usize) as f64;
             let cx = x - (WIDTH / 2) as f64;
             let cy = (HEIGHT / 2) as f64 - y;
 
-            let dir = canvas_to_viewport(self, cx, cy);
-            let color = trace_ray(self, ORIGIN, dir, 1.0, f64::INFINITY, 3);
+            let dir = Mat3x3::rotation_mat(camera.rotation, UP) * canvas_to_viewport(self, cx, cy);
+            // println!("{:#?}", Mat3x3::rotation_mat(camera.rotation, UP, X, Y));
+            // let dir = canvas_to_viewport(self, cx, cy);
+            let color = trace_ray(self, camera.position, dir, 1.0, f64::INFINITY, 3);
 
             pixel.copy_from_slice(&color.as_u8_slice());
         }
